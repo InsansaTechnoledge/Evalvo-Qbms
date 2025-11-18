@@ -22,14 +22,14 @@ const LoginPage = () => {
 
     const data = {email, password}
 
-    setLoading(true);
+    setLoading(true); 
     setError('');
 
     try{
 
       // const response = await axios.post('/api/login', data);
 
-    } catch (err) {
+    } catch (err) {   
       setError(err.message || err.data.message || 'An error occurred during login.')
     } finally {
         setLoading(false)
