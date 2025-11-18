@@ -92,7 +92,7 @@ const LoginPage = () => {
                 <p className='text-red-600'>{error}</p>
               </div>
             )
-          }
+          }~
            {
             showNavigationMessage && (
               <div className='text-center mb-10 bg-blue-200/20 border border-blue-400/40 px-4 py-2 rounded-md'>
