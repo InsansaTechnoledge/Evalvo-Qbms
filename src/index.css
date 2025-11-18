@@ -1,0 +1,6 @@
+@import "tailwindcss";
+
+
+@utility pageHeader{
+    @apply text-center mt-10 md:text-[3vw] text-2xl uppercase font-bold bg-linear-to-r from-blue-800  to-teal-600 bg-clip-text text-transparent
+}
