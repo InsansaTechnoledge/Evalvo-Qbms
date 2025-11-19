@@ -1,5 +1,5 @@
 // Pagelinks.jsx
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { BrowserRouter, Route, Routes } from 'react-router-dom';
 import BeforeAuthLayout from '../layouts/BeforeAuthLayout';
 import LandingPage from '../pages/LandingPage';
@@ -19,43 +19,85 @@ import CO from '../pages/AfterAuth/PO\'s_AND_CO\'s/CO';
 import COPOmapping from '../pages/AfterAuth/PO\'s_AND_CO\'s/COPOmapping';
 import LoginPage from '../pages/Authentication/LoginPage';
 import SignupPage from '../pages/Authentication/SignupPage';
+import { checkAuth } from '../services/authService';
+import AuthRoute from '../layouts/AuthRoute';
+import { useUser } from '../contexts/UserContext';
 
 const Pagelinks = () => {
+  const {user , setUser } = useUser();
+  const [loading, setLoading] = useState(true);
+
+  async function fetchUser() {
+    try {
+      const response = await checkAuth();
+      if (response?.status === 200) {
+        setUser(response.data.user);
+      } else {
+        setUser(null);
+      }
+    } catch (error) {
+      console.error("Error fetching user data:", error);
+      setUser(null);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    const hasLoggedIn = localStorage.getItem('hasLoggedIn') === 'true';
+
+    if (!user && hasLoggedIn) {
+      fetchUser();
+    } else {
+      setLoading(false);
+    }
+  }, [user]);
+
+  if (loading) {
+    return (
+      <div>Loading...</div>
+    )
+  }
+
   return (
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<BeforeAuthLayout />}>
-
           <Route index element={<LandingPage />} />
-          <Route path='login' element={<LoginPage/>}/>
-          <Route path='signup' element={<SignupPage/>}/>
-          
+          <Route path='login' element={<LoginPage />} />
+          <Route path='signup' element={<SignupPage />} />
+
         </Route>
 
-        <Route path='/qbms' element={<AfterAuthLayout/>}>
 
-            <Route index element={<FirstPage/>}/>
+        <Route element={<AuthRoute />} >
+          <Route path='/qbms' element={<AfterAuthLayout />}>
 
-            <Route path='manage-school' element={<ManageSchool/>}/>
-            <Route path='add-school' element={<AddSchool/>}/>
+            <Route index element={<FirstPage />} />
 
-            <Route path='manage-programs' element={<ManagePrograms/>}/>
-            <Route path='add-programs' element={<AddPrograms/>}/>
+            <Route path='manage-school' element={<ManageSchool />} />
+            <Route path='add-school' element={<AddSchool />} />
 
-            <Route path='manage-batches' element={<ManageBatches/>}/>
-            <Route path='add-batches' element={<AddBatches/>}/>
+            <Route path='manage-programs' element={<ManagePrograms />} />
+            <Route path='add-programs' element={<AddPrograms />} />
 
-            <Route path='manage-questions' element={<ManageQuestions/>}/>
-            <Route path='add-questions' element={<AddQuestions/>}/>
-            <Route path='question-paper-generator' element={<QuestionPaperGenerator/>}/>
+            <Route path='manage-batches' element={<ManageBatches />} />
+            <Route path='add-batches' element={<AddBatches />} />
 
-            <Route path='manage-po' element={<ManageProgramOutcomes/>}/>
-            <Route path='manage-co' element={<CO/>}/>
-            <Route path='manage-co-po' element={<COPOmapping/>}/>
+            <Route path='manage-questions' element={<ManageQuestions />} />
+            <Route path='add-questions' element={<AddQuestions />} />
+            <Route path='question-paper-generator' element={<QuestionPaperGenerator />} />
 
+            <Route path='manage-po' element={<ManageProgramOutcomes />} />
+            <Route path='manage-co' element={<CO />} />
+            <Route path='manage-co-po' element={<COPOmapping />} />
 
-            
+          </Route>
         </Route>
+
+        {/*Fallback route for undefined paths*/}
+        <Route path="session-expired" element={<div>Session Expired</div>} />
+
       </Routes>
     </BrowserRouter>
   );

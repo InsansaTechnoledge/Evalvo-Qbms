@@ -1,10 +1,13 @@
-import React from 'react'
 import Pagelinks from './utils/Pagelinks'
+import { UserProvider } from './contexts/UserContext';
 
 const App = () => {
   return (
     <main>
-      <Pagelinks/>
+      <UserProvider>
+        <Pagelinks/>
+      </UserProvider>
+      
     </main>
   )
 }
