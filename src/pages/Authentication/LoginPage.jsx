@@ -1,8 +1,10 @@
 import React, { useRef, useState } from 'react'
 import logo from '/logo.svg'
 import { Eye, EyeClosed } from 'lucide-react';
-import { Link } from 'react-router-dom';
-import axios from 'axios';
+import { Link, useNavigate } from 'react-router-dom';
+import { checkAuth, instituteLogin } from '../../services/authService';
+import { useUser } from '../../contexts/UserContext';
+
 
 const LoginPage = () => {
 
@@ -17,6 +19,8 @@ const LoginPage = () => {
   const navigationMessage = 'You are being navigated to evalvotech.com for registration '
 
   const timeoutRef = useRef(false);
+  const navigate = useNavigate();
+  const {setUser} = useUser();
 
   const CountDownTimeRef = useRef(null);
 
@@ -34,7 +38,29 @@ const LoginPage = () => {
 
     try{
 
-      // const response = await axios.post('/api/login', data);
+      const response = await instituteLogin(data);
+
+      if (response?.status === 200) {
+        const waitForUser = async (retries = 10) => {
+          for (let i = 0; i < retries; i++) {
+            const userResponse = await checkAuth();
+            if (userResponse?.status === 200) {
+              setUser(userResponse.data.user);
+              
+              localStorage.setItem("hasLoggedIn", "true"); 
+              setEmail('');
+              setPassword('');
+              navigate('/qbms');
+
+              return;
+            }
+            await new Promise((resolve) => setTimeout(resolve, 2000));
+          }
+         
+        };
+
+        await waitForUser();
+      }
 
     } catch (err) {   
       setError(err.message || err.data.message || 'An error occurred during login.')
