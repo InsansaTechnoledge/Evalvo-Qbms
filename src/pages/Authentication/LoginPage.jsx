@@ -13,9 +13,16 @@ const LoginPage = () => {
   const [show, setShow] = useState(false);
   const [loading , setLoading] = useState(false);
   const [error , setError] = useState(' ');
+  const [showNavigationMessage , setShowNavigationMessage] = useState(false);
+  const [countdown, setCountdown] = useState(null);
+
+  const navigationMessage = 'You are being navigated to evalvotech.com for registration '
+
   const timeoutRef = useRef(false);
   const navigate = useNavigate();
   const {setUser} = useUser();
+
+  const CountDownTimeRef = useRef(null);
 
   const handleLogin = async () => {
   
@@ -26,7 +33,7 @@ const LoginPage = () => {
 
     const data = {email, password}
 
-    setLoading(true);
+    setLoading(true); 
     setError('');
 
     try{
@@ -55,7 +62,7 @@ const LoginPage = () => {
         await waitForUser();
       }
 
-    } catch (err) {
+    } catch (err) {   
       setError(err.message || err.data.message || 'An error occurred during login.')
     } finally {
         setLoading(false)
@@ -74,6 +81,30 @@ const LoginPage = () => {
     }, 1000);
   }
 
+  const handleCreateAccountNavigation = (e) => {
+
+    e.preventDefault();
+
+    if(CountDownTimeRef.current) return;
+
+    setShowNavigationMessage(true);
+    setCountdown(3);
+
+    let current = 3;
+    CountDownTimeRef.current = setInterval(() => {
+      current -= 1
+      setCountdown(current)
+
+      if(current === 0) {
+        clearInterval(CountDownTimeRef.current);
+        CountDownTimeRef.current = null
+        window.location.href='https://evalvotech.com/institute-registration'
+        setShowNavigationMessage(false);
+      }
+    },1000)
+
+  }
+
 
   return (
     <section>
@@ -82,9 +113,17 @@ const LoginPage = () => {
       
         <div className='fle flex-col justify-center items-center gap-6 '>
           {
-            (error.trim()).length !== 0 && (
+            (error.trim()).length !== 0  && (
               <div className='text-center mb-10 bg-red-200/20 border border-red-400/40 px-4 py-2 rounded-md'>
                 <p className='text-red-600'>{error}</p>
+              </div>
+            )
+          }~
+           {
+            showNavigationMessage && (
+              <div className='text-center mb-10 bg-blue-200/20 border border-blue-400/40 px-4 py-2 rounded-md'>
+                <p className='text-blue-600'>{navigationMessage}</p>
+                <p className='text-center text-blue-600'>Redirecting in <span className='text-red-600'>{countdown}</span>...</p>
               </div>
             )
           }
@@ -134,9 +173,9 @@ const LoginPage = () => {
 
           <div className='mt-6 w-100%'>
             <p className='w-full'>account do not exist?  
-              <Link to='/signup' className='text-blue-600 ml-2 underline hover:text-blue-700'>
+              <button onClick={(e) => handleCreateAccountNavigation(e)}  className='cursor-pointer text-blue-600 ml-2 underline hover:text-blue-700'>
                 Create account
-              </Link>
+              </button>
               <span className='ml-2 mr-2'>or go back? 
                 <Link to='/' className='text-blue-600 ml-2 underline hover:text-blue-700'>
                   Main page

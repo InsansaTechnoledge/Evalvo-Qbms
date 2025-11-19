@@ -1,10 +1,11 @@
-import React, { useMemo, useState, useCallback } from "react";
+import React, { useMemo, useState, useCallback, useRef } from "react";
 import { Edit2, Trash2, Save, X, Search, AlertCircle } from "lucide-react";
 import { PageHeader } from "../../../components/ui/PageHeader";
 import { StatsCard } from "../../../components/ui/StatsCard";
 import { DeleteModal } from "../../../components/ui/DeleteModal";
 import { Toast } from "../../../components/ui/Toast";
 import { BatchData } from "../../../utils/Constants";
+
 
 const validateBatchData = (data) => {
   const errors = {};
@@ -35,9 +36,13 @@ const ManageBatches = () => {
   const [draftRow, setDraftRow] = useState(null);
   const [validationErrors, setValidationErrors] = useState({});
   const [searchQuery, setSearchQuery] = useState("");
+  const [searchInput, setSearchInput] = useState("");
+
   const [filterSchool, setFilterSchool] = useState("ALL");
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [toast, setToast] = useState(null);
+
+  const timeRef = useRef(null)
 
   const showToast = useCallback((message, type = "success") => {
     setToast({ message, type });
@@ -156,6 +161,21 @@ const ManageBatches = () => {
     setDeleteTarget(null);
   }, []);
 
+  
+
+  const handleSearchDebouncing = (e) => {
+    const value = e.target.value
+
+    setSearchInput(value);
+
+    if(timeRef.current) clearTimeout(timeRef.current);
+
+    timeRef.current = setTimeout(() => {
+      setSearchQuery(value.trim())
+    },500)
+    
+  }
+
   return (
     <section className="">
       <div className="max-w-7xl mx-auto">
@@ -188,8 +208,8 @@ const ManageBatches = () => {
               <input
                 type="text"
                 placeholder="Search by batch, school, program or year..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                value={searchInput}
+                onChange={(e) => handleSearchDebouncing(e)}
                 className="w-full pl-10 pr-4 py-2.5 rounded-lg border-2 border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
             </div>

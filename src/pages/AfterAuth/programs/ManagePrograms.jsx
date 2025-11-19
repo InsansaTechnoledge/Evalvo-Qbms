@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useCallback } from "react";
+import React, { useMemo, useState, useCallback, useRef } from "react";
 import { Edit2, Trash2, Save, X, Search, AlertCircle } from "lucide-react";
 import { PageHeader } from "../../../components/ui/PageHeader";
 import { StatsCard } from "../../../components/ui/StatsCard";
@@ -47,10 +47,13 @@ const ManagePrograms = () => {
   const [draftRow, setDraftRow] = useState(null);
   const [validationErrors, setValidationErrors] = useState({});
   const [searchQuery, setSearchQuery] = useState("");
+  const [searchInput , setSearchInput] = useState('');
   const [filterLevel, setFilterLevel] = useState("ALL");
   const [filterSchool, setFilterSchool] = useState("ALL");
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [toast, setToast] = useState(null);
+
+  const timeRef = useRef(null);
 
   // Toast helper
   const showToast = useCallback((message, type = "success") => {
@@ -179,6 +182,19 @@ const ManagePrograms = () => {
     setDeleteTarget(null);
   }, []);
 
+  const handleDebouncingSearch = (e) => {
+    const value = e.target.value 
+
+    setSearchInput(value);
+
+    if(timeRef.current) clearTimeout(timeRef.current)
+
+    timeRef.current = setTimeout(() => {
+      setSearchQuery(value.trim());
+    },500)
+  }
+
+
 
   return (
     <section className="">
@@ -207,8 +223,8 @@ const ManagePrograms = () => {
               <input
                 type="text"
                 placeholder="Search by program name, code, or school..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                value={searchInput}
+                onChange={(e) => handleDebouncingSearch(e)}
                 className="w-full pl-10 pr-4 py-2.5 rounded-lg border-2 border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
             </div>
