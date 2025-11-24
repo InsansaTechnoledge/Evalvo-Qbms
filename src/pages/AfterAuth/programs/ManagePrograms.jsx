@@ -44,12 +44,12 @@ const validateProgramData = (data) => {
 const ManagePrograms = () => {
 
   const [programData, setProgramData] = useState([]);
-  const [Schools , setSchools] = useState([])
+  const [Schools, setSchools] = useState([])
   const [editingId, setEditingId] = useState(null);
   const [draftRow, setDraftRow] = useState(null);
   const [validationErrors, setValidationErrors] = useState({});
   const [searchQuery, setSearchQuery] = useState("");
-  const [searchInput , setSearchInput] = useState('');
+  const [searchInput, setSearchInput] = useState('');
   const [filterLevel, setFilterLevel] = useState("ALL");
   const [filterSchool, setFilterSchool] = useState("ALL");
   const [deleteTarget, setDeleteTarget] = useState(null);
@@ -63,27 +63,27 @@ const ManagePrograms = () => {
     setTimeout(() => setToast(null), 3000);
   }, []);
 
-  useEffect(()  => {
+  useEffect(() => {
     const fetchProgramData = async () => {
-      const data = await fetchProgramList();
+      const data = await fetchProgramList({});
 
       console.log("we", data.data);
       setProgramData(data.data)
     }
 
     fetchProgramData();
-  },[])
+  }, [])
 
   useEffect(() => {
     const fetchSchools = async () => {
       const res = await getSchool();
 
-      console.log("schools" , res.data);
+      console.log("schools", res.data);
       setSchools(res.data);
     }
 
     fetchSchools();
-  })
+  }, [])
 
   // Filtered & searched data
   const filteredData = useMemo(() => {
@@ -108,8 +108,8 @@ const ManagePrograms = () => {
     const pgPrograms = programData.filter((p) => p.level === "PG").length;
     const uniqueSchools = [...new Set(programData.map((p) => p.program_id))].length;
 
-    console.log("school check" , uniqueSchools);
-    
+    console.log("school check", uniqueSchools);
+
 
     return {
       total: programData.length,
@@ -185,7 +185,7 @@ const ManagePrograms = () => {
     setValidationErrors({});
   }, []);
 
-  const handleDeleteConfirm = useCallback( async () => {
+  const handleDeleteConfirm = useCallback(async () => {
     if (!deleteTarget) return;
 
     try {
@@ -194,12 +194,12 @@ const ManagePrograms = () => {
       setProgramData((prev) => prev.filter((row) => row.id !== deleteTarget.id));
 
       showToast(`${deleteTarget.name} deleted successfully`, "success");
-      
+
       setDeleteTarget(null);
     } catch (e) {
       showToast(`${e.message}`, "error");
       setDeleteTarget(null);
-    }finally{
+    } finally {
       // setLoading(false);
     }
     if (editingId === deleteTarget.id) {
@@ -214,20 +214,20 @@ const ManagePrograms = () => {
   }, []);
 
   const handleDebouncingSearch = (e) => {
-    const value = e.target.value 
+    const value = e.target.value
 
     setSearchInput(value);
 
-    if(timeRef.current) clearTimeout(timeRef.current)
+    if (timeRef.current) clearTimeout(timeRef.current)
 
     timeRef.current = setTimeout(() => {
       setSearchQuery(value.trim());
-    },500)
+    }, 500)
   }
 
   const getSchoolName = (id) => {
-    if(!id) return 
-    const name =  Schools.filter((s) => s.id === id)
+    if (!id) return
+    const name = Schools.filter((s) => s.id === id)
     return name[0]?.name;
   }
 
@@ -273,9 +273,9 @@ const ManagePrograms = () => {
                 className="w-full px-4 py-2.5 rounded-lg border-2 border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               >
                 <option value="ALL">All Schools</option>
-                {Schools.map((name) => (
-                  <option key={name} value={name.id}>
-                    {name.name}
+                {Schools.map((s) => (
+                  <option key={s.id} value={s.id}>
+                    {s.name}
                   </option>
                 ))}
               </select>
@@ -330,11 +330,10 @@ const ManagePrograms = () => {
                   return (
                     <tr
                       key={row.id}
-                      className={`transition-colors ${
-                        isEditing ? "bg-blue-50" : "hover:bg-gray-50"
-                      }`}
+                      className={`transition-colors ${isEditing ? "bg-blue-50" : "hover:bg-gray-50"
+                        }`}
                     >
-                      <td className="px-6 py-4 text-gray-700 font-medium">#{(row.id).slice(0,8)}</td>
+                      <td className="px-6 py-4 text-gray-700 font-medium">#{(row.id).slice(0, 8)}</td>
 
                       {/* Program Name */}
                       <td className="px-6 py-4">
@@ -344,11 +343,10 @@ const ManagePrograms = () => {
                               type="text"
                               value={current.name}
                               onChange={(e) => handleDraftChange("name", e.target.value)}
-                              className={`w-full rounded-lg border-2 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                                validationErrors.name
+                              className={`w-full rounded-lg border-2 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${validationErrors.name
                                   ? "border-red-400 bg-red-50"
                                   : "border-gray-300"
-                              }`}
+                                }`}
                               placeholder="Program name"
                             />
                             {validationErrors.name && (
@@ -371,11 +369,10 @@ const ManagePrograms = () => {
                               type="text"
                               value={current.code}
                               onChange={(e) => handleDraftChange("code", e.target.value)}
-                              className={`w-full rounded-lg border-2 px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                                validationErrors.code
+                              className={`w-full rounded-lg border-2 px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-500 ${validationErrors.code
                                   ? "border-red-400 bg-red-50"
                                   : "border-gray-300"
-                              }`}
+                                }`}
                               placeholder="e.g., BTECH-CSE-01"
                             />
                             {validationErrors.code && (
@@ -404,11 +401,10 @@ const ManagePrograms = () => {
                               onChange={(e) =>
                                 handleDraftChange("duration_semsters", e.target.value)
                               }
-                              className={`w-28 rounded-lg border-2 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                                validationErrors.duration_semsters
+                              className={`w-28 rounded-lg border-2 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${validationErrors.duration_semsters
                                   ? "border-red-400 bg-red-50"
                                   : "border-gray-300"
-                              }`}
+                                }`}
                               placeholder="1–12"
                             />
                             {validationErrors.duration_semsters && (
@@ -420,7 +416,7 @@ const ManagePrograms = () => {
                           </div>
                         ) : (
                           <span className="text-gray-700">
-                            {row.duration_semesters || 'N/A'} 
+                            {row.duration_semesters || 'N/A'}
                             {/* {row.duration_semsters !== 1 ? "sem" : ""} */}
                           </span>
                         )}
@@ -432,11 +428,10 @@ const ManagePrograms = () => {
                           <select
                             value={current.schoolName || ""}
                             onChange={(e) => handleDraftChange("schoolName", e.target.value)}
-                            className={`w-full rounded-lg border-2 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                              validationErrors.schoolName
+                            className={`w-full rounded-lg border-2 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${validationErrors.schoolName
                                 ? "border-red-400 bg-red-50"
                                 : "border-gray-300"
-                            }`}
+                              }`}
                           >
                             <option value="">Select School</option>
                             {Schools.map((s, idx) => (
@@ -525,7 +520,7 @@ const ManagePrograms = () => {
         </div>
       </div>
 
-       
+
       {deleteTarget && (
         <DeleteModal
           program={deleteTarget}

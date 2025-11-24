@@ -4,7 +4,7 @@ import { PageHeader } from "../../../components/ui/PageHeader";
 import { StatsCard } from "../../../components/ui/StatsCard";
 import { DeleteModal } from "../../../components/ui/DeleteModal";
 import { Toast } from "../../../components/ui/Toast";
-import { BatchData } from "../../../utils/Constants";
+import { useBatchData } from "../../../components/AfterAuth/useBatchData";
 
 
 const validateBatchData = (data) => {
@@ -30,7 +30,7 @@ const validateBatchData = (data) => {
 };
 
 const ManageBatches = () => {
-  const [batchData, setBatchData] = useState(BatchData || []);
+  const { batchData, loading } = useBatchData();
 
   const [editingId, setEditingId] = useState(null);
   const [draftRow, setDraftRow] = useState(null);
@@ -248,7 +248,9 @@ const ManageBatches = () => {
           )}
         </div>
 
-        {/* Table */}
+        {loading ? (<><div>loading...</div></>) : 
+        (
+          <>
         <div className="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden">
           <div className="px-6 py-4 border-b border-gray-200 bg-gray-50">
             <h2 className="text-lg font-semibold text-gray-800">
@@ -432,7 +434,10 @@ const ManageBatches = () => {
             </table>
           </div>
         </div>
+        </>
+        )}
       </div>
+      
 
       {/* Delete Modal – reusing same DeleteModal API as ManageSchool */}
       {deleteTarget && (
