@@ -54,7 +54,7 @@ const LoginPage = () => {
 
               return;
             }
-            await new Promise((resolve) => setTimeout(resolve, 2000));
+            // await new Promise((resolve) => setTimeout(resolve, 2000));
           }
          
         };

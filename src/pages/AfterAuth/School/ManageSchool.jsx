@@ -1,10 +1,11 @@
-import React, { useMemo, useState, useCallback, useRef } from "react";
+import React, { useMemo, useState, useCallback, useRef, useEffect } from "react";
 import { Edit2, Trash2, Save, X, Search, AlertCircle, CheckCircle } from "lucide-react";
 import { PageHeader } from "../../../components/ui/PageHeader";
 import { StatsCard } from "../../../components/ui/StatsCard";
 import { DeleteModal } from "../../../components/ui/DeleteModal";
 import { Toast } from "../../../components/ui/Toast";
-import { Schools } from "../../../utils/Constants";
+import axios from "axios";
+import { useUser } from "../../../contexts/UserContext";
 
 const validateSchoolData = (data) => {
   const errors = {};
@@ -33,12 +34,7 @@ const validateSchoolData = (data) => {
 };
 
 const ManageSchool = () => {
-  const [schoolData, setSchoolData] = useState(Schools);
-
-  // for null testing
-  // const [schoolData, setSchoolData] = useState([]);
-
-
+  const [schoolData, setSchoolData] = useState([]);
   const [editingId, setEditingId] = useState(null);
   const [draftRow, setDraftRow] = useState(null);
   const [validationErrors, setValidationErrors] = useState({});
@@ -47,14 +43,37 @@ const ManageSchool = () => {
   const [filterLevel, setFilterLevel] = useState("ALL");
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [toast, setToast] = useState(null);
+  const [loading , setLoading] = useState(false);
 
   const timeRef = useRef(null)
 
   // Show toast helper
-  const showToast = useCallback((message, type = "success") => {
+  const showToast = useCallback((message, type ) => {
     setToast({ message, type });
     setTimeout(() => setToast(null), 3000);
   }, []);
+
+  const {user} = useUser();
+  console.log("rs", user._id);
+  
+
+  useEffect(() => {
+    const fetchSchoolData = async () => {
+      const { data } = await axios.get(
+        "http://localhost:8000/api/v1/programs/program",
+        {
+          withCredentials: true,
+          params: { organization_id: user._id },
+        }
+      );
+      console.log("data1", data.data);
+
+      setSchoolData(data.data);
+
+      console.log("data2", schoolData);
+    };
+    fetchSchoolData();
+  },[])
 
   // Filtered and searched data
   const filteredData = useMemo(() => {
@@ -105,6 +124,7 @@ const ManageSchool = () => {
       });
     }
   }, [validationErrors]);
+  
 
   const handleSave = useCallback(() => {
     if (!draftRow) return;
@@ -145,13 +165,31 @@ const ManageSchool = () => {
     setValidationErrors({});
   }, []);
 
-  const handleDeleteConfirm = useCallback(() => {
+  const handleDeleteConfirm = useCallback(async () => {
+    console.log("qwe", deleteTarget);
+    
     if (!deleteTarget) return;
+
     
-    setSchoolData((prev) => prev.filter((row) => row.id !== deleteTarget.id));
-    showToast(`${deleteTarget.name} deleted successfully`, "success");
-    setDeleteTarget(null);
-    
+    try {
+      setLoading(true)
+      await axios.delete(
+        `http://localhost:8000/api/v1/programs/program/${deleteTarget.id}`,
+        {
+          withCredentials: true,
+        }
+      );
+  
+      showToast(`${deleteTarget.name} deleted successfully`, "success");
+      setSchoolData((prev) => prev.filter((row) => row.id !== deleteTarget.id));
+      setDeleteTarget(null);
+    } catch (e) {
+      showToast(`${e.message}`, "error");
+      setDeleteTarget(null);
+    }finally{
+      setLoading(false);
+    }
+  
     // If we were editing this row, cancel editing
     if (editingId === deleteTarget.id) {
       setEditingId(null);
@@ -159,7 +197,7 @@ const ManageSchool = () => {
       setValidationErrors({});
     }
   }, [deleteTarget, editingId, showToast]);
-
+  
   const handleDeleteCancel = useCallback(() => {
     setDeleteTarget(null);
   }, []);
@@ -276,7 +314,7 @@ const ManageSchool = () => {
                       `}
                     >
                       <td className="px-6 py-4 text-gray-700 font-medium">
-                        #{row.id}
+                        #{(row.id).slice(0,8)}
                       </td>
 
                       {/* Name */}
@@ -354,7 +392,7 @@ const ManageSchool = () => {
                         ) : (
                           <span className={`
                             inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold
-                            ${row.level === "UG" ? "bg-green-100 text-green-700" : "bg-blue-100 text-blue-700"}
+                            ${(row.level) === "UG" || "ug" ? "bg-green-100 text-green-700" : "bg-blue-100 text-blue-700"}
                           `}>
                             {row.level}
                           </span>
@@ -467,6 +505,7 @@ const ManageSchool = () => {
           school={deleteTarget}
           onConfirm={handleDeleteConfirm}
           onCancel={handleDeleteCancel}
+          loading={loading}
         />
       )}
 

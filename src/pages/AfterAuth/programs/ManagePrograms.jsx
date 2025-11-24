@@ -1,12 +1,12 @@
-import React, { useMemo, useState, useCallback, useRef } from "react";
+import React, { useMemo, useState, useCallback, useRef, useEffect } from "react";
 import { Edit2, Trash2, Save, X, Search, AlertCircle } from "lucide-react";
 import { PageHeader } from "../../../components/ui/PageHeader";
 import { StatsCard } from "../../../components/ui/StatsCard";
 import { Toast } from "../../../components/ui/Toast";
-import { ProgramData, Schools } from "../../../utils/Constants";
+// import { Schools } from "../../../utils/Constants";
 import { DeleteModal } from "../../../components/ui/DeleteModal";
+import axios from "axios";
 
-/* ========= Helpers ========= */
 
 const validateProgramData = (data) => {
   const errors = {};
@@ -41,8 +41,9 @@ const validateProgramData = (data) => {
 
 
 const ManagePrograms = () => {
-  const [programData, setProgramData] = useState(ProgramData);
 
+  const [programData, setProgramData] = useState([]);
+  const [Schools , setSchools] = useState([])
   const [editingId, setEditingId] = useState(null);
   const [draftRow, setDraftRow] = useState(null);
   const [validationErrors, setValidationErrors] = useState({});
@@ -61,11 +62,31 @@ const ManagePrograms = () => {
     setTimeout(() => setToast(null), 3000);
   }, []);
 
-  // Unique schools for filter dropdown
-  const schoolOptions = useMemo(() => {
-    const names = Array.from(new Set(programData.map((p) => p.schoolName).filter(Boolean)));
-    return names;
-  }, [programData]);
+  useEffect(()  => {
+    const fetchProgramData = async () => {
+      const data = await axios.get('http://localhost:8000/api/v1/course/course',{
+        withCredentials: true
+      })
+
+      console.log("we", data.data.data);
+      setProgramData(data.data.data)
+    }
+
+    fetchProgramData();
+  },[])
+
+  useEffect(() => {
+    const fetchSchools = async () => {
+      const data = await axios.get('http://localhost:8000/api/v1/programs/program' , {
+        withCredentials: true
+      })
+
+      console.log("schools" , data.data.data);
+      setSchools(data.data.data)
+    }
+
+    fetchSchools();
+  })
 
   // Filtered & searched data
   const filteredData = useMemo(() => {
@@ -74,10 +95,10 @@ const ManagePrograms = () => {
       const matchesSearch =
         program.name.toLowerCase().includes(q) ||
         program.code.toLowerCase().includes(q) ||
-        (program.schoolName || "").toLowerCase().includes(q);
+        (program.program_id || "").includes(q);
 
       const matchesLevel = filterLevel === "ALL" || program.level === filterLevel;
-      const matchesSchool = filterSchool === "ALL" || program.schoolName === filterSchool;
+      const matchesSchool = filterSchool === "ALL" || program.program_id === filterSchool;
 
       return matchesSearch && matchesLevel && matchesSchool;
     });
@@ -88,7 +109,10 @@ const ManagePrograms = () => {
     const uniqueSemesters = [...new Set(programData.map((p) => p.duration_semsters))];
     const ugPrograms = programData.filter((p) => p.level === "UG").length;
     const pgPrograms = programData.filter((p) => p.level === "PG").length;
-    const uniqueSchools = [...new Set(programData.map((p) => p.schoolName))].length;
+    const uniqueSchools = [...new Set(programData.map((p) => p.program_id))].length;
+
+    console.log("school check" , uniqueSchools);
+    
 
     return {
       total: programData.length,
@@ -164,13 +188,28 @@ const ManagePrograms = () => {
     setValidationErrors({});
   }, []);
 
-  const handleDeleteConfirm = useCallback(() => {
+  const handleDeleteConfirm = useCallback( async () => {
     if (!deleteTarget) return;
 
-    setProgramData((prev) => prev.filter((row) => row.id !== deleteTarget.id));
-    showToast(`${deleteTarget.name} deleted successfully`, "success");
-    setDeleteTarget(null);
+    try {
+      // setLoading(true)
+      await axios.delete(
+        `http://localhost:8000/api/v1/course/course/${deleteTarget.id}`,
+        {
+          withCredentials: true,
+        }
+      );
+      setProgramData((prev) => prev.filter((row) => row.id !== deleteTarget.id));
 
+      showToast(`${deleteTarget.name} deleted successfully`, "success");
+      
+      setDeleteTarget(null);
+    } catch (e) {
+      showToast(`${e.message}`, "error");
+      setDeleteTarget(null);
+    }finally{
+      // setLoading(false);
+    }
     if (editingId === deleteTarget.id) {
       setEditingId(null);
       setDraftRow(null);
@@ -194,6 +233,11 @@ const ManagePrograms = () => {
     },500)
   }
 
+  const getSchoolName = (id) => {
+    if(!id) return 
+    const name =  Schools.filter((s) => s.id === id)
+    return name[0]?.name;
+  }
 
 
   return (
@@ -208,8 +252,8 @@ const ManagePrograms = () => {
         {/* Stats */}
         <div className="flex flex-wrap gap-4 mb-8">
           <StatsCard title="Total Programs" value={stats.total} color="blue" />
-          <StatsCard title="UG Programs" value={stats.ugPrograms} color="blue" />
-          <StatsCard title="PG Programs" value={stats.pgPrograms} color="blue" />
+          {/* <StatsCard title="UG Programs" value={stats.ugPrograms} color="blue" />
+          <StatsCard title="PG Programs" value={stats.pgPrograms} color="blue" /> */}
           <StatsCard title="Unique Semesters" value={stats.uniqueSemesters} color="blue" />
           <StatsCard title="Linked Schools" value={stats.uniqueSchools} color="blue" />
         </div>
@@ -229,19 +273,6 @@ const ManagePrograms = () => {
               />
             </div>
 
-            {/* Level Filter */}
-            <div className="lg:w-48">
-              <select
-                value={filterLevel}
-                onChange={(e) => setFilterLevel(e.target.value)}
-                className="w-full px-4 py-2.5 rounded-lg border-2 border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              >
-                <option value="ALL">All Levels</option>
-                <option value="UG">UG Only</option>
-                <option value="PG">PG Only</option>
-              </select>
-            </div>
-
             {/* School Filter */}
             <div className="lg:w-56">
               <select
@@ -250,9 +281,9 @@ const ManagePrograms = () => {
                 className="w-full px-4 py-2.5 rounded-lg border-2 border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               >
                 <option value="ALL">All Schools</option>
-                {schoolOptions.map((name) => (
-                  <option key={name} value={name}>
-                    {name}
+                {Schools.map((name) => (
+                  <option key={name} value={name.id}>
+                    {name.name}
                   </option>
                 ))}
               </select>
@@ -294,8 +325,7 @@ const ManagePrograms = () => {
                   <th className="px-6 py-4 font-semibold">ID</th>
                   <th className="px-6 py-4 font-semibold">Program Name</th>
                   <th className="px-6 py-4 font-semibold">Code</th>
-                  <th className="px-6 py-4 font-semibold">Level</th>
-                  <th className="px-6 py-4 font-semibold">Duration</th>
+                  <th className="px-6 py-4 font-semibold">Duration (semesters)</th>
                   <th className="px-6 py-4 font-semibold">School</th>
                   <th className="px-6 py-4 text-right font-semibold">Actions</th>
                 </tr>
@@ -312,7 +342,7 @@ const ManagePrograms = () => {
                         isEditing ? "bg-blue-50" : "hover:bg-gray-50"
                       }`}
                     >
-                      <td className="px-6 py-4 text-gray-700 font-medium">#{row.id}</td>
+                      <td className="px-6 py-4 text-gray-700 font-medium">#{(row.id).slice(0,8)}</td>
 
                       {/* Program Name */}
                       <td className="px-6 py-4">
@@ -370,35 +400,6 @@ const ManagePrograms = () => {
                         )}
                       </td>
 
-                      {/* Level */}
-                      <td className="px-6 py-4">
-                        {isEditing ? (
-                          <select
-                            value={current.level}
-                            onChange={(e) => handleDraftChange("level", e.target.value)}
-                            className={`w-full rounded-lg border-2 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                              validationErrors.level
-                                ? "border-red-400 bg-red-50"
-                                : "border-gray-300"
-                            }`}
-                          >
-                            <option value="">Select</option>
-                            <option value="UG">UG</option>
-                            <option value="PG">PG</option>
-                          </select>
-                        ) : (
-                          <span
-                            className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${
-                              row.level === "UG"
-                                ? "bg-green-100 text-green-700"
-                                : "bg-blue-100 text-blue-700"
-                            }`}
-                          >
-                            {row.level}
-                          </span>
-                        )}
-                      </td>
-
                       {/* Duration */}
                       <td className="px-6 py-4">
                         {isEditing ? (
@@ -427,8 +428,8 @@ const ManagePrograms = () => {
                           </div>
                         ) : (
                           <span className="text-gray-700">
-                            {row.duration_semsters} sem
-                            {row.duration_semsters !== 1 ? "s" : ""}
+                            {row.duration_semesters || 'N/A'} 
+                            {/* {row.duration_semsters !== 1 ? "sem" : ""} */}
                           </span>
                         )}
                       </td>
@@ -453,7 +454,7 @@ const ManagePrograms = () => {
                             ))}
                           </select>
                         ) : (
-                          <span className="text-gray-800">{row.schoolName}</span>
+                          <span className={`text-gray-800 ${getSchoolName(row.program_id) === undefined ? 'text-red-600' : 'text-gray-500 font-bold'}`}>{getSchoolName(row.program_id) || "No School Linked"}</span>
                         )}
                         {isEditing && validationErrors.schoolName && (
                           <p className="text-xs text-red-600 mt-1 flex items-center gap-1">

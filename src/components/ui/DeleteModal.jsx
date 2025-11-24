@@ -9,6 +9,7 @@ export function DeleteModal({
   cancelLabel = "Cancel",
   onConfirm,
   onCancel,
+  loading
 }) {
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 animate-in fade-in">
@@ -33,7 +34,7 @@ export function DeleteModal({
             onClick={onConfirm}
             className="px-4 py-2 rounded-lg font-medium text-white bg-red-600 hover:bg-red-700 transition"
           >
-            {confirmLabel}
+            {!loading ? confirmLabel : 'Loading...'}
           </button>
         </div>
       </div>

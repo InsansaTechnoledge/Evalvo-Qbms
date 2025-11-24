@@ -16,7 +16,8 @@ const typeStyles = {
   },
 };
 
-export function Toast({ message, type = "success", onClose }) {
+export function Toast({ message, type, onClose }) {
+  
   const config = typeStyles[type] || typeStyles.info;
   const Icon = config.Icon;
 

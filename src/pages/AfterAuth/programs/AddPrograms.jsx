@@ -1,19 +1,17 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { Pause, Play, Square, Volume2 } from "lucide-react";
 import { useTTS } from "../../../hooks/useTTS";
 import { PageHeader } from "../../../components/ui/PageHeader";
 import { Toast } from "../../../components/ui/Toast";
-import { Schools } from "../../../utils/Constants";
+// import { Schools } from "../../../utils/Constants";
 import axios from "axios";
+import { useUser } from "../../../contexts/UserContext";
 
 const fieldHasValue = (v) => String(v ?? "").trim().length > 0;
 
 const validateField = (name, value) => {
   switch (name) {
-    case "programName":
-      if (!fieldHasValue(value)) return "Please choose a school.";
-      return null;
-
+    
     case "name":
       if (!fieldHasValue(value)) return "Program name is required.";
       if (value.length < 3) return "Program name must be at least 3 characters.";
@@ -43,11 +41,13 @@ const validateField = (name, value) => {
 const AddPrograms = () => {
   const [formData, setFormData] = useState({
     name: "",
-    programName: "",
     code: "",
     duration_semesters: "",
     program_id : '' // school id in this case ( program_id because of naming convention in db , it is school_id)
   });
+
+  console.log("program", formData);
+  
 
   const [touched, setTouched] = useState({});
   const [loading, setLoading] = useState(false);
@@ -56,6 +56,27 @@ const AddPrograms = () => {
 
   const { voices, speak, cancel, pause, resume, speaking, paused } = useTTS();
   const [selectedVoiceIndex, setSelectedVoiceIndex] = useState(1);
+
+  const [Schools, setSchools] = useState([])
+  const {user} = useUser();
+
+  useEffect(() => {
+      const fetchSchoolData = async () => {
+        const { data } = await axios.get(
+          "http://localhost:8000/api/v1/programs/program",
+          {
+            withCredentials: true,
+            params: { organization_id: user._id },
+          }
+        );
+        console.log("data1", data.data);
+  
+        setSchools(data.data);
+  
+        console.log("data2", Schools);
+      };
+      fetchSchoolData();
+    },[])
 
   const DESCRIPTION_TEXT = `
 A Program represents a specific academic offering under a School — for example, B.Tech Computer Science, MBA (Finance), BBA, or M.Sc. Physics. Each program defines its own curriculum, regulations, duration, and eligibility, and is always linked to a particular school within your organization.
@@ -98,10 +119,9 @@ In Evalvo QBMS, programs act as the bridge between schools and batches. Question
   const handleReset = () => {
     setFormData({
       name: "",
-      programName: "",
       code: "",
       duration_semesters: "",
-      program_id : '686f8fce6e7a08ef775c4672'
+      program_id : ''
     });
     setTouched({});
     setGlobalError(null);
@@ -123,12 +143,22 @@ In Evalvo QBMS, programs act as the bridge between schools and batches. Question
     setGlobalError(null);
     setLoading(true);
 
+    console.log("ttt", formData);
+    
+
     try {
       
       // await new Promise((resolve) => setTimeout(resolve, 1500));
 
-      const data = await axios.post("http://localhost:8000/api/v1/course/course", formData)
+      const data = await axios.post("http://localhost:8000/api/v1/course/course", 
+        formData ,
+        {
+          withCredentials: true        
+        }
+       )
 
+       console.log("eew", data);
+       
       // console.log("check", data)
 
       setToast("Program added successfully!");
@@ -191,7 +221,7 @@ In Evalvo QBMS, programs act as the bridge between schools and batches. Question
                       Program Name
                     </span>
                     <p className="text-lg font-medium mt-1">
-                      {formData.programName || "—"}
+                      {formData.name || "—"}
                     </p>
                   </div>
                   {/* <div className="bg-white p-4 rounded-lg border border-gray-200">
@@ -304,27 +334,31 @@ In Evalvo QBMS, programs act as the bridge between schools and batches. Question
             School *
           </label>
           <select
-            value={formData.programName}
-            onChange={(e) => handleFieldChange("programName", e.target.value)}
-            onBlur={() => handleFieldBlur("programName")}
+            value={formData.program_id}
+            onChange={(e) => handleFieldChange("program_id", e.target.value)}
+            onBlur={() => handleFieldBlur("program_id")}
             className={`w-full px-4 py-2.5 rounded-lg border-2 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors ${
-              errors.programName ? "border-red-400 bg-red-50" : "border-gray-300"
+              errors.program_id ? "border-red-400 bg-red-50" : "border-gray-300"
             }`}
           >
             <option value="">— Select School —</option>
-            {Schools?.map((school, index) => (
-              <option
-                key={school.code || school._id || index}
-                value={school.name}  // store the display name in formData.name
-              >
+            {Schools?.map((school) => (
+              <option key={school.id} value={school.id}>
                 {school.name}
               </option>
             ))}
           </select>
 
-          {errors.programName && (
+          {errors.program_id && (
             <p className="text-sm text-red-600 mt-1 flex items-center gap-1">
-              <span>⚠</span> {errors.programName}
+              <span>⚠</span> {errors.program_id}
+            </p>
+          )}
+
+
+          {errors.program_id && (
+            <p className="text-sm text-red-600 mt-1 flex items-center gap-1">
+              <span>⚠</span> {errors.program_id}
             </p>
           )}
         </div>
@@ -334,7 +368,7 @@ In Evalvo QBMS, programs act as the bridge between schools and batches. Question
         {/* Form Section */}
         <div className="bg-white rounded-2xl shadow-lg border border-gray-200 p-6 md:p-8">
           <h2 className="text-2xl font-semibold text-gray-800 mb-6">
-            Program Details {formData.programName && `for ${formData.programName}`}
+            Program Details
           </h2>
 
           <div className="space-y-6">

@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { PageHeader } from "../../../components/ui/PageHeader";
 import { Toast } from "../../../components/ui/Toast";
 import { Schools, ProgramData } from "../../../utils/Constants";
@@ -43,14 +43,46 @@ const AddBatches = () => {
   const [formData, setFormData] = useState({
     name: "",
     year: "",
-    schoolId: "",
-    programId: "",
+    course_id: "",
+    programId: "xyz",
   });
 
   const [touched, setTouched] = useState({});
   const [loading, setLoading] = useState(false);
+
   const [toast, setToast] = useState(null);
+
   const [globalError, setGlobalError] = useState(null);
+  const [Schools , setSchools] = useState([]);
+  const [programs , setPrograms] = useState([]);
+
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try{
+          const schoolData = await axios.get('http://localhost:8000/api/v1/programs/program' , {
+            withCredentials: true
+          })
+          setSchools(schoolData.data.data)
+          console.log("check", schoolData.data.data );
+      } catch(e) {
+        setToast(`${e.message}`, "error");
+      }
+    }
+    fetchData();
+  },[])
+
+  useEffect(() => {
+    const fetchPrograms = async () => {
+      const data = await axios.get('http://localhost:8000/api/v1/course/course',{
+        withCredentials: true,
+        params: {program_id: formData.schoolId}
+      })
+      setPrograms(data.data.data)
+      console.log("huhu",  data.data.data , programs);
+    }
+    fetchPrograms();
+  },[formData.schoolId])
 
   // TTS
   const { voices, speak, cancel, pause, resume, speaking, paused } = useTTS();
@@ -118,7 +150,6 @@ In Evalvo QBMS, batches help you organize exams, results, and question usage for
     setFormData({
       name: "",
       year: "",
-      schoolId: "",
       program_id: "",
       course_id: ""
     });
@@ -144,10 +175,16 @@ In Evalvo QBMS, batches help you organize exams, results, and question usage for
 
     try {
 
+      console.log("batch test" , formData);
+      
 
       await new Promise((resolve) => setTimeout(resolve, 1200));
 
-      // const data = await axios.post("http://localhost:8000/api/v1/batch/create-batch", formData)
+      const data = await axios.post("http://localhost:8000/api/v1/batch/create-batch", formData ,
+        {
+          withCredentials: true
+        }
+      )
 
       setToast("Batch added successfully!");
       setTimeout(() => setToast(null), 3000);
@@ -161,25 +198,27 @@ In Evalvo QBMS, batches help you organize exams, results, and question usage for
 
   // derived labels
   const selectedSchool = Schools.find(
-    (s) => s._id === formData.schoolId || s.code === formData.schoolId
+    (s) => s.id === formData.course_id || s.code === formData.course_id || s.id === formData.course_id
   );
+  
 
-  const filteredProgramData = useMemo(() => {
-    if (!formData.schoolId) return [];
-    return ProgramData.filter(
-      (p) =>
-        p.schoolId === formData.schoolId ||
-        p.school_id === formData.schoolId ||
-        p.schoolCode === formData.schoolId
-    );
-  }, [formData.schoolId]);
+  // const filteredProgramData = useMemo(() => {
+  //   if (!formData.schoolId) return [];
+  //   return ProgramData.filter(
+  //     (p) =>
+  //       p.schoolId === formData.schoolId ||
+  //       p.school_id === formData.schoolId ||
+  //       p.schoolCode === formData.schoolId
+  //   );
+  // }, [formData.schoolId]);
 
-  const selectedProgram = ProgramData.find(
+  const selectedProgram = programs.find(
     (p) =>
       p._id === formData.programId ||
       p.code === formData.programId ||
       p.id === formData.programId
   );
+  
 
   return (
     <section>
@@ -389,30 +428,30 @@ In Evalvo QBMS, batches help you organize exams, results, and question usage for
                   School *
                 </label>
                 <select
-                  value={formData.schoolId}
+                  value={formData.course_id}
                   onChange={(e) =>
-                    handleFieldChange("schoolId", e.target.value)
+                    handleFieldChange("course_id", e.target.value)
                   }
-                  onBlur={() => handleFieldBlur("schoolId")}
+                  onBlur={() => handleFieldBlur("course_id")}
                   className={`w-full px-4 py-2.5 rounded-lg border-2 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                    errors.schoolId
+                    errors.course_id
                       ? "border-red-400 bg-red-50"
                       : "border-gray-300"
                   }`}
                 >
                   <option value="">— Select School —</option>
-                  {Schools.map((s, index) => (
+                  {Schools.map((s) => (
                     <option
-                      key={s._id || s.code || index}
-                      value={s._id || s.code}
+                      key={s.id}
+                      value={s.id}
                     >
                       {s.name}
                     </option>
                   ))}
                 </select>
-                {errors.schoolId && (
+                {errors.course_id && (
                   <p className="text-sm text-red-600 flex items-center gap-1">
-                    <span>⚠</span> {errors.schoolId}
+                    <span>⚠</span> {errors.course_id}
                   </p>
                 )}
               </div>
@@ -428,26 +467,26 @@ In Evalvo QBMS, batches help you organize exams, results, and question usage for
                     handleFieldChange("programId", e.target.value)
                   }
                   onBlur={() => handleFieldBlur("programId")}
-                  disabled={!formData.schoolId}
+                  disabled={!formData.course_id}
                   className={`w-full px-4 py-2.5 rounded-lg border-2 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                     errors.programId
                       ? "border-red-400 bg-red-50"
                       : "border-gray-300"
                   } ${
-                    !formData.schoolId
+                    !formData.course_id
                       ? "bg-gray-100 cursor-not-allowed"
                       : ""
                   }`}
                 >
                   <option value="">
-                    {formData.schoolId
+                    {formData.course_id
                       ? "— Select Program —"
                       : "Select a school first"}
                   </option>
-                  {filteredProgramData.map((p, index) => (
+                  {programs.map((p, index) => (
                     <option
-                      key={p._id || p.code || p.id || index}
-                      value={p._id || p.code || p.id}
+                      key={p.id }
+                      value={p.id}
                     >
                       {p.name}
                     </option>

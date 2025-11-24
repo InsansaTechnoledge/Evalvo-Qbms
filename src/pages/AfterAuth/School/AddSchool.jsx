@@ -4,6 +4,8 @@ import { useTTS } from "../../../hooks/useTTS";
 import { PageHeader } from "../../../components/ui/PageHeader";
 import { Toast } from "../../../components/ui/Toast";
 import axios from "axios";
+import { useUser } from "../../../contexts/UserContext";
+import { checkAuth } from "../../../services/authService";
 
 
 
@@ -49,6 +51,10 @@ const AddSchool = () => {
     duration_semesters: "",
     organization_id : ''
   });
+
+  const {user} = useUser();
+  console.log("chcek", user);
+  
   
   const [touched, setTouched] = useState({});
   const [loading, setLoading] = useState(false);
@@ -70,6 +76,9 @@ const AddSchool = () => {
   const showPreview = useMemo(() => {
     return Object.values(formData).some(v => fieldHasValue(v));
   }, [formData]);
+
+  console.log(showPreview, formData);
+  
 
   const errors = useMemo(() => {
     const errs = {};
@@ -101,12 +110,13 @@ const AddSchool = () => {
       code: "",
       level: "",
       duration_semesters: "",
-      organization_id : '686f8fce6e7a08ef775c4672'
+      organization_id : ''
     });
     setTouched({});
     setGlobalError(null);
     cancel();
   };
+
 
   const handleSubmit = async () => {
    
@@ -128,15 +138,19 @@ const AddSchool = () => {
     try {
       
       console.log("check", formData);
-
-      await new Promise((resolve) => setTimeout(resolve, 1500));
       
-      // const data = await axios.post("http://localhost:8000/api/v1/programs/program" , formData);
+      const res = await axios.post(
+        "http://localhost:8000/api/v1/programs/program",
+        formData,                    
+        {
+          withCredentials: true        
+        }
+      );
       
       // Success
       setToast("School added successfully!");
       setTimeout(() => setToast(null), 3000);
-      console.log("sdf", data);
+      console.log("sdf", res);
       
       handleReset();
     } catch (err) {
@@ -365,7 +379,7 @@ const AddSchool = () => {
           {/* Global Error */}
           {globalError && (
             <div className="mt-6 p-4 rounded-lg bg-red-50 border border-red-200">
-              <p className="text-sm text-red-700 flex items-center gap-2">
+              <p className="text-md text-red-700 flex items-center gap-2">
                 <span className="text-lg">⚠</span>
                 {globalError}
               </p>
