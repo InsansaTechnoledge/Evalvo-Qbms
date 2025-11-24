@@ -3,9 +3,9 @@ import { Pause, Play, Square, Volume2 } from "lucide-react";
 import { useTTS } from "../../../hooks/useTTS";
 import { PageHeader } from "../../../components/ui/PageHeader";
 import { Toast } from "../../../components/ui/Toast";
-import axios from "axios";
 import { useUser } from "../../../contexts/UserContext";
-import { checkAuth } from "../../../services/authService";
+import { addSchool } from "../../../services/schoolService";
+
 
 
 
@@ -18,18 +18,18 @@ const validateField = (name, value) => {
       if (value.length < 3) return "School name must be at least 3 characters.";
       if (value.length > 100) return "School name must be less than 100 characters.";
       return null;
-    
+
     case "level":
       if (!fieldHasValue(value)) return "Please choose UG or PG.";
       return null;
-    
+
     case "code":
       if (!fieldHasValue(value)) return "School code is required.";
       if (!/^[A-Za-z0-9\-_.]{2,12}$/.test(value)) {
         return "Code: 2–12 chars (A–Z, 0–9, -, _, .)";
       }
       return null;
-    
+
     case "duration_semesters":
       const num = +value;
       if (!fieldHasValue(value)) return "Duration is required.";
@@ -37,7 +37,7 @@ const validateField = (name, value) => {
         return "Duration: 1–12 semesters.";
       }
       return null;
-    
+
     default:
       return null;
   }
@@ -49,13 +49,13 @@ const AddSchool = () => {
     code: "",
     level: "",
     duration_semesters: "",
-    organization_id : ''
+    organization_id: ''
   });
 
-  const {user} = useUser();
+  const { user } = useUser();
   console.log("chcek", user);
-  
-  
+
+
   const [touched, setTouched] = useState({});
   const [loading, setLoading] = useState(false);
   const [toast, setToast] = useState(null);
@@ -65,10 +65,10 @@ const AddSchool = () => {
   const { voices, speak, cancel, pause, resume, speaking, paused } = useTTS();
   const [selectedVoiceIndex, setSelectedVoiceIndex] = useState(1);
 
-  const DESCRIPTION_TEXT = 
+  const DESCRIPTION_TEXT =
     "A School represents an academic division or institution within your organization — for example, School of Engineering, School of Management, or School of Arts. Each school contains its own set of programs, batches, and question banks, helping you manage departments and courses independently while keeping your data structured and scalable. Adding schools to your organization allows the system to structure and manage your data more efficiently. Each school acts as a separate entity within your organization, ensuring clear segregation of programs, batches, and question banks for seamless administration and reporting.";
 
-  
+
   const selectedVoice = useMemo(() => {
     return voices?.[selectedVoiceIndex] || voices?.[0] || null;
   }, [voices, selectedVoiceIndex]);
@@ -78,7 +78,7 @@ const AddSchool = () => {
   }, [formData]);
 
   console.log(showPreview, formData);
-  
+
 
   const errors = useMemo(() => {
     const errs = {};
@@ -110,7 +110,7 @@ const AddSchool = () => {
       code: "",
       level: "",
       duration_semesters: "",
-      organization_id : ''
+      organization_id: ''
     });
     setTouched({});
     setGlobalError(null);
@@ -119,14 +119,14 @@ const AddSchool = () => {
 
 
   const handleSubmit = async () => {
-   
+
     const allTouched = Object.keys(formData).reduce((acc, key) => {
       acc[key] = true;
       return acc;
     }, {});
     setTouched(allTouched);
 
-    
+
     if (!isFormValid) {
       setGlobalError("Please fix all errors before submitting.");
       return;
@@ -136,25 +136,16 @@ const AddSchool = () => {
     setLoading(true);
 
     try {
-      
-      console.log("check", formData);
-      
-      const res = await axios.post(
-        "http://localhost:8000/api/v1/programs/program",
-        formData,                    
-        {
-          withCredentials: true        
-        }
-      );
-      
-      // Success
-      setToast("School added successfully!");
-      setTimeout(() => setToast(null), 3000);
-      console.log("sdf", res);
-      
-      handleReset();
+
+      const res = await addSchool(formData);
+      if (res.status === 200) {
+        setToast("School added successfully!");
+        setTimeout(() => setToast(null), 3000);
+        handleReset();
+      }
+
     } catch (err) {
-      // setGlobalError("Something went wrong. Please try again.");
+
       setGlobalError(err.response?.data?.message || "Something went wrong. Please try again.")
     } finally {
       setLoading(false);
@@ -278,7 +269,7 @@ const AddSchool = () => {
         {/* Form Section */}
         <div className="bg-white rounded-2xl shadow-lg border border-gray-200 p-6 md:p-8">
           <h2 className="text-2xl font-semibold text-gray-800 mb-6">School Details</h2>
-          
+
           <div className="space-y-6">
             {/* Row 1 */}
             <div className="grid md:grid-cols-2 gap-6">
@@ -292,9 +283,8 @@ const AddSchool = () => {
                   onChange={(e) => handleFieldChange("name", e.target.value)}
                   onBlur={() => handleFieldBlur("name")}
                   placeholder="e.g., School of Engineering"
-                  className={`w-full px-4 py-2.5 rounded-lg border-2 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                    errors.name ? "border-red-400 bg-red-50" : "border-gray-300"
-                  }`}
+                  className={`w-full px-4 py-2.5 rounded-lg border-2 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors.name ? "border-red-400 bg-red-50" : "border-gray-300"
+                    }`}
                   autoFocus
                 />
                 {errors.name && (
@@ -312,9 +302,8 @@ const AddSchool = () => {
                   value={formData.level}
                   onChange={(e) => handleFieldChange("level", e.target.value)}
                   onBlur={() => handleFieldBlur("level")}
-                  className={`w-full px-4 py-2.5 rounded-lg border-2 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                    errors.level ? "border-red-400 bg-red-50" : "border-gray-300"
-                  }`}
+                  className={`w-full px-4 py-2.5 rounded-lg border-2 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors.level ? "border-red-400 bg-red-50" : "border-gray-300"
+                    }`}
                 >
                   <option value="">— Select Level —</option>
                   <option value="UG">Undergraduate (UG)</option>
@@ -340,9 +329,8 @@ const AddSchool = () => {
                   onChange={(e) => handleFieldChange("code", e.target.value)}
                   onBlur={() => handleFieldBlur("code")}
                   placeholder="e.g., SOE-2024"
-                  className={`w-full px-4 py-2.5 rounded-lg border-2 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                    errors.code ? "border-red-400 bg-red-50" : "border-gray-300"
-                  }`}
+                  className={`w-full px-4 py-2.5 rounded-lg border-2 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors.code ? "border-red-400 bg-red-50" : "border-gray-300"
+                    }`}
                 />
                 {errors.code && (
                   <p className="text-sm text-red-600 flex items-center gap-1">
@@ -363,9 +351,8 @@ const AddSchool = () => {
                   onChange={(e) => handleFieldChange("duration_semesters", e.target.value)}
                   onBlur={() => handleFieldBlur("duration_semesters")}
                   placeholder="e.g., 8"
-                  className={`w-full px-4 py-2.5 rounded-lg border-2 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                    errors.duration_semesters ? "border-red-400 bg-red-50" : "border-gray-300"
-                  }`}
+                  className={`w-full px-4 py-2.5 rounded-lg border-2 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors.duration_semesters ? "border-red-400 bg-red-50" : "border-gray-300"
+                    }`}
                 />
                 {errors.duration_semesters && (
                   <p className="text-sm text-red-600 flex items-center gap-1">

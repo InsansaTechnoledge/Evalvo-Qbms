@@ -4,8 +4,8 @@ import { PageHeader } from "../../../components/ui/PageHeader";
 import { StatsCard } from "../../../components/ui/StatsCard";
 import { DeleteModal } from "../../../components/ui/DeleteModal";
 import { Toast } from "../../../components/ui/Toast";
-import axios from "axios";
 import { useUser } from "../../../contexts/UserContext";
+import { deleteSchool, getSchool } from "../../../services/schoolService";
 
 const validateSchoolData = (data) => {
   const errors = {};
@@ -59,14 +59,8 @@ const ManageSchool = () => {
 
   useEffect(() => {
     const fetchSchoolData = async () => {
-      const { data } = await axios.get(
-        "http://localhost:8000/api/v1/programs/program",
-        {
-          withCredentials: true,
-          params: { organization_id: user._id },
-        }
-      );
-      console.log("data1", data.data);
+      
+       const data = await getSchool({organization_id : user.role === 'organization' ? user._id : user.organization_id._id});
 
       setSchoolData(data.data);
 
@@ -77,7 +71,7 @@ const ManageSchool = () => {
 
   // Filtered and searched data
   const filteredData = useMemo(() => {
-    return schoolData.filter((school) => {
+    return schoolData?.filter((school) => {
       const matchesSearch = 
         school?.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         school?.code.toLowerCase().includes(searchQuery.toLowerCase());
@@ -173,12 +167,7 @@ const ManageSchool = () => {
     
     try {
       setLoading(true)
-      await axios.delete(
-        `http://localhost:8000/api/v1/programs/program/${deleteTarget.id}`,
-        {
-          withCredentials: true,
-        }
-      );
+      await deleteSchool(deleteTarget.id);
   
       showToast(`${deleteTarget.name} deleted successfully`, "success");
       setSchoolData((prev) => prev.filter((row) => row.id !== deleteTarget.id));

@@ -3,8 +3,11 @@ import { PageHeader } from "../../../components/ui/PageHeader";
 import { Toast } from "../../../components/ui/Toast";
 import { Schools, ProgramData } from "../../../utils/Constants";
 import { useTTS } from "../../../hooks/useTTS";
-import { Pause, Play, Square, Volume2 } from "lucide-react";
-import axios from "axios";
+import { Pause, Play, Square, User, Volume2 } from "lucide-react";
+import { getSchool} from "../../../services/schoolService";
+import { useUser } from "../../../contexts/UserContext";
+import { fetchProgramList } from "../../../services/programService";
+import { createBatch } from "../../../services/batchService";
 
 const fieldHasValue = (v) => String(v ?? "").trim().length > 0;
 
@@ -55,16 +58,14 @@ const AddBatches = () => {
   const [globalError, setGlobalError] = useState(null);
   const [Schools , setSchools] = useState([]);
   const [programs , setPrograms] = useState([]);
+  const {user} = useUser();
 
 
   useEffect(() => {
     const fetchData = async () => {
       try{
-          const schoolData = await axios.get('http://localhost:8000/api/v1/programs/program' , {
-            withCredentials: true
-          })
-          setSchools(schoolData.data.data)
-          console.log("check", schoolData.data.data );
+          const schoolData = await getSchool({organization_id : user.role === 'organization' ? user._id : user.organization_id._id});
+          setSchools(schoolData.data)
       } catch(e) {
         setToast(`${e.message}`, "error");
       }
@@ -74,12 +75,9 @@ const AddBatches = () => {
 
   useEffect(() => {
     const fetchPrograms = async () => {
-      const data = await axios.get('http://localhost:8000/api/v1/course/course',{
-        withCredentials: true,
-        params: {program_id: formData.schoolId}
-      })
-      setPrograms(data.data.data)
-      console.log("huhu",  data.data.data , programs);
+      const data = await fetchProgramList({program_id: formData.schoolId});
+      setPrograms(data.data)
+      console.log("huhu",  data.data , programs);
     }
     fetchPrograms();
   },[formData.schoolId])
@@ -180,11 +178,7 @@ In Evalvo QBMS, batches help you organize exams, results, and question usage for
 
       await new Promise((resolve) => setTimeout(resolve, 1200));
 
-      const data = await axios.post("http://localhost:8000/api/v1/batch/create-batch", formData ,
-        {
-          withCredentials: true
-        }
-      )
+      const data = await createBatch(formData);
 
       setToast("Batch added successfully!");
       setTimeout(() => setToast(null), 3000);

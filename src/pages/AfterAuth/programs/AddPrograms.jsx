@@ -4,8 +4,9 @@ import { useTTS } from "../../../hooks/useTTS";
 import { PageHeader } from "../../../components/ui/PageHeader";
 import { Toast } from "../../../components/ui/Toast";
 // import { Schools } from "../../../utils/Constants";
-import axios from "axios";
 import { useUser } from "../../../contexts/UserContext";
+import { createProgram } from "../../../services/programService";
+import { getSchool } from "../../../services/schoolService";
 
 const fieldHasValue = (v) => String(v ?? "").trim().length > 0;
 
@@ -46,7 +47,6 @@ const AddPrograms = () => {
     program_id : '' // school id in this case ( program_id because of naming convention in db , it is school_id)
   });
 
-  console.log("program", formData);
   
 
   const [touched, setTouched] = useState({});
@@ -62,13 +62,7 @@ const AddPrograms = () => {
 
   useEffect(() => {
       const fetchSchoolData = async () => {
-        const { data } = await axios.get(
-          "http://localhost:8000/api/v1/programs/program",
-          {
-            withCredentials: true,
-            params: { organization_id: user._id },
-          }
-        );
+         const data = await getSchool({organization_id : user.role === 'organization' ? user._id : user.organization_id._id});
         console.log("data1", data.data);
   
         setSchools(data.data);
@@ -150,12 +144,7 @@ In Evalvo QBMS, programs act as the bridge between schools and batches. Question
       
       // await new Promise((resolve) => setTimeout(resolve, 1500));
 
-      const data = await axios.post("http://localhost:8000/api/v1/course/course", 
-        formData ,
-        {
-          withCredentials: true        
-        }
-       )
+      const data = await createProgram(formData);
 
        console.log("eew", data);
        

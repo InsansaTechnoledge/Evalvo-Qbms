@@ -5,7 +5,8 @@ import { StatsCard } from "../../../components/ui/StatsCard";
 import { Toast } from "../../../components/ui/Toast";
 // import { Schools } from "../../../utils/Constants";
 import { DeleteModal } from "../../../components/ui/DeleteModal";
-import axios from "axios";
+import { getSchool } from "../../../services/schoolService";
+import { deleteProgram, fetchProgramList } from "../../../services/programService";
 
 
 const validateProgramData = (data) => {
@@ -64,12 +65,10 @@ const ManagePrograms = () => {
 
   useEffect(()  => {
     const fetchProgramData = async () => {
-      const data = await axios.get('http://localhost:8000/api/v1/course/course',{
-        withCredentials: true
-      })
+      const data = await fetchProgramList();
 
-      console.log("we", data.data.data);
-      setProgramData(data.data.data)
+      console.log("we", data.data);
+      setProgramData(data.data)
     }
 
     fetchProgramData();
@@ -77,12 +76,10 @@ const ManagePrograms = () => {
 
   useEffect(() => {
     const fetchSchools = async () => {
-      const data = await axios.get('http://localhost:8000/api/v1/programs/program' , {
-        withCredentials: true
-      })
+      const res = await getSchool();
 
-      console.log("schools" , data.data.data);
-      setSchools(data.data.data)
+      console.log("schools" , res.data);
+      setSchools(res.data);
     }
 
     fetchSchools();
@@ -193,12 +190,7 @@ const ManagePrograms = () => {
 
     try {
       // setLoading(true)
-      await axios.delete(
-        `http://localhost:8000/api/v1/course/course/${deleteTarget.id}`,
-        {
-          withCredentials: true,
-        }
-      );
+      await deleteProgram(deleteTarget.id);
       setProgramData((prev) => prev.filter((row) => row.id !== deleteTarget.id));
 
       showToast(`${deleteTarget.name} deleted successfully`, "success");
