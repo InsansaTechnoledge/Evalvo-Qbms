@@ -10,3 +10,8 @@ export const fetchBatchList = async (id) => {
   const response = await api.get(`/v1/batch/get-batch/${query}`);
   return response.data;
 };
+
+export const updateBatch = async (batchId, batchData) => {
+  const response = await api.patch(`/v1/batch/update-batch/${batchId}`, batchData);
+  return response.data;
+};

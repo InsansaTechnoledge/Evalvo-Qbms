@@ -88,6 +88,6 @@ useEffect(() => {
         }
     }, [batches, programs, schools]);
 
-    return {batchData, loading};
+    return {batchData, loading ,setBatches,setLoading};
 
 }
